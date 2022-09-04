@@ -15,6 +15,7 @@ import englishdatepicker from './EnglishDatepicker.vue';
 
 onMounted(() => {
   updateDates();
+  main.today = todaysDate();
   main.dateType = 'EN';
   let container = document.getElementById('datePicker109usojfd');
   document.addEventListener('click', function (e) {
@@ -33,6 +34,8 @@ watch(props,(newVal)=>{
 });
 
 const props = defineProps(['modelValue','defaultDate']);
+
+const emit = defineEmits(['update:modalValue']);
 
 const _nepaliDates = [
   { year: 2026, value: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31], days: function () { return this.value.reduce((s, x) => s + x, 0) }, startDay: null },
@@ -112,36 +115,29 @@ const _nepaliDates = [
 ];
 const dateTypeList = ['EN', 'NP'];
 const _startDay = 0;
+const today = null;
 const main = reactive({
   input: {
     placeholder: "placeholder"
   },
+  today:null,
   dateType: null,
   showDatePicker: false,
   originNP: '2026/08/17',
   dateEN: { text: null, value: null },
   dateNP: { text: null, value: null },
 });
-class EnglishDate extends Date{
 
-}
-class NepaliDate {
-  constructor(date){
-
-  }
-  constructor(year,month,date){
-
-  }
-  constructor(time){
-
-  }
-  format(){
-
-  }
-}
 
 function todaysDate(){
-  var _enDate = new Date();
+  var _today = new Date();
+  let _todaysDate = {nepali:{value:null,text:null},english:{value:null,text:null}};
+  _todaysDate.english.value = {year:_today.getFullYear(),month:{text:null,value:duoDigitMaker(_today.getMonth())},date:duoDigitMaker(_today.getDate())};
+  _todaysDate.english.text = _todaysDate.english.value.date+'/'+ duoDigitMaker(parseFloat(_todaysDate.english.value.month.value)+1) +'/' +_todaysDate.english.value.year;
+
+  _todaysDate.nepali.value = ConvertEnglishToNepali(duoDigitMaker(parseFloat(_todaysDate.english.value.month.value)+1) +'/' +_todaysDate.english.value.date+'/'+_todaysDate.english.value.year)
+  _todaysDate.nepali.text = _todaysDate.nepali.value.year + '/' + duoDigitMaker(_todaysDate.nepali.value.month.value + 1) + '/' + duoDigitMaker(_todaysDate.nepali.value.date)
+return _todaysDate;
 }
 
 function duoDigitMaker(val) {
@@ -157,10 +153,11 @@ function updateEnglishDate(obj) {
   obj.month.value = duoDigitMaker(obj.month.value + 1);
   main.dateEN.text = obj.date + '/' + obj.month.value + '/' + obj.year;
   main.dateEN.value = obj;
+  main.dateEN.value.month.value = parseFloat(main.dateEN.value.month.value)-1;
   toggleDatePicker(false);
   main.dateNP.value = ConvertEnglishToNepali(obj.month.value + '/' + obj.date + '/' + obj.year);
   main.dateNP.text = main.dateNP.value.year + '/' + duoDigitMaker(main.dateNP.value.month.value + 1) + '/' + duoDigitMaker(main.dateNP.value.date)
-  $emit('update:modelValue',{dateEN:main.dateEN,dateNP:main.dateNP});
+  // emit('update:modelValue',{dateEN:main.dateEN,dateNP:main.dateNP});
 }
 
 function toggleDatePicker(val) {
@@ -216,6 +213,12 @@ function addNepaliDaysToOrigin(days) {
   console.log(_origin);
 }
 
+function ConvertEnglishToNepali(dateEN) {
+  let _addingDays = getNPSpan(new Date(dateEN));
+  return addNepaliDaysToOrigin(_addingDays);
+
+};
+
 defineExpose({ toggleDatePicker, _nepaliDates, updateEnglishDate });
 
 </script>
@@ -230,9 +233,10 @@ defineExpose({ toggleDatePicker, _nepaliDates, updateEnglishDate });
       </select>
     </div>
     <div class="datepicker-body">
-      <nepalidatepicker :value="main.dateNP" :options="_nepaliDates"
+      <nepalidatepicker :value="main.dateNP" :today="main.today?.nepali.value" :options="_nepaliDates"
         v-if="main.dateType == 'NP' && main.showDatePicker" />
-      <englishdatepicker :value="main.dateEN" v-else-if="main.dateType == 'EN' && main.showDatePicker" />
+      <englishdatepicker :value="main.dateEN" :today="main.today?.english.value"
+        v-else-if="main.dateType == 'EN' && main.showDatePicker" />
     </div>
   </div>
 </template>

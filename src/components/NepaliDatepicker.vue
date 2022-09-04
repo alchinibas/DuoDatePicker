@@ -84,18 +84,17 @@ export default {
             ],
         }
     },
-    props: ['value', 'options'],
+    props: ['value', 'options','today'],
     created() {
-        console.log(this.value.value, "hereee");
         this._dates = this.options;
         if (!this.value.value) {
-            this.calender.month = this.month[0];
-            this.calender.year = this._dates[0];
+            this.calender.year = this._dates.find(x=>x.year == this.today.year);
+            this.calender.month = this.month.find(x => x.value == (parseFloat(this.today.month.value)));
+            this.calender.date = this.today.date;
         } else {
             this.calender.month = this.month.find(x => x.value == this.value.value.month?.value);
             this.calender.year = this._dates.find(x => x.year == this.value.value.year);
             this.calender.date = this.value.value.date
-            console.log(this.calender, "calender");
         }
     },
     mounted() {
@@ -157,7 +156,7 @@ export default {
             </div>
             <div class="week-grid">
                 <div class="date-item" v-for="nd in getMonthStartDay()"></div>
-                <div :class="[{ 'selected-date': calender.date == date && calender.month.value == value.value.month.value }, 'date-item']"
+                <div :class="[{ 'selected-date': calender.date == date && calender.month.value == value.value?.month.value }, 'date-item']"
                     v-for="date in calender.year.value[calender.month.value]">{{ date }}</div>
             </div>
         </div>

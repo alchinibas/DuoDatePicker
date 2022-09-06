@@ -84,17 +84,18 @@ export default {
             ],
         }
     },
-    props: ['value', 'options','today'],
+    props: ['value', 'options', 'today'],
     created() {
         this._dates = this.options;
         if (!this.value.value) {
-            this.calender.year = this._dates.find(x=>x.year == this.today.year);
+            this.calender.year = this._dates.find(x => x.year == this.today.year.year);
             this.calender.month = this.month.find(x => x.value == (parseFloat(this.today.month.value)));
             this.calender.date = this.today.date;
         } else {
+            console.log(this.value.value, "value date")
             this.calender.month = this.month.find(x => x.value == this.value.value.month?.value);
-            this.calender.year = this._dates.find(x => x.year == this.value.value.year);
-            this.calender.date = this.value.value.date
+            this.calender.year = this._dates.find(x => x.year == this.value.value.year.year);
+            this.calender.date = this.value.value.date;
         }
     },
     mounted() {
@@ -127,6 +128,11 @@ export default {
             }
             this.calender.month = this.month.find(x => x.value == _month);;
         },
+        updateDate(date) {
+            // this.$emit('change', );
+            this.calender.date = date;
+            this.$parent.updateNepaliDate(this.calender);
+        },
     }
 }
 </script>
@@ -157,8 +163,9 @@ export default {
             <div class="week-grid">
                 <div class="date-item" v-for="nd in getMonthStartDay()"></div>
                 <div :class="[{ 'selected-date': calender.date == date && calender.month.value == value.value?.month.value }, 'date-item']"
-                    v-for="date in calender.year.value[calender.month.value]">{{ date }}</div>
+                    v-for="date in calender.year.value[calender.month.value]" @click="updateDate(date)">{{ date }}</div>
             </div>
         </div>
     </div>
 </template>
+    

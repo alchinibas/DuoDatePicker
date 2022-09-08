@@ -48,6 +48,11 @@
 e {
     border: 1px solid skyblue;
 }
+
+.disabled-item {
+    pointer-events: none;
+    opacity: 0.3;
+}
 </style>
 <script>
 export default {
@@ -90,7 +95,6 @@ export default {
     },
     props: ['value', 'today', 'disableTo', 'disableFrom', 'disableDates'],
     created() {
-        console.log(this.today);
         if (!this.value.value) {
             this.calender.year = this.today.year;
             this.calender.month = this.month.find(x => x.value == (parseFloat(this.today.month.value)));
@@ -102,7 +106,6 @@ export default {
         }
     },
     mounted() {
-        console.log(this.disableTo, "disableTo");
     },
     computed: {
         yearStartDay() {
@@ -135,19 +138,65 @@ export default {
         },
         prevMonth() {
             let _month = (12 + this.calender.month.value) % 12;
-            console.log("heree", _year >= this._yearRange[0], _month);
             if (_month == 0) {
                 var _year = (this.calender.year - 1);
+                _month = 11;
                 if (_year >= this._yearRange[0]) {
                     this.calender.year = _year;
                 }
-            }
+            } else _month -= 1;
             this.calender.month = this.month.find(x => x.value == _month);;
         },
         updateDate(date) {
             // this.$emit('change', );
             this.calender.date = date;
-            this.calender.updateEnglishDate(this.calender);
+            this.$parent.updateEnglishDate(this.calender);
+        },
+        disableYear(year = this.calender.year) {
+            return this.disableDates?.includes(x => x.year == year) || year < this.disableTo?.year || year > this.disableFrom?.year;
+        },
+        affectingCurrentYear(year = this.calender.year) {
+            return year == this.disableTo?.year || year == this.disableFrom?.year;
+        },
+        affectingCurrentMonth(month = this.calender.month) {
+            return month.value == this.disableTo?.month.value || month.value == this.disableFrom?.month.value;
+        },
+        affectingCurrentDate(date) {
+            let _isAffected = this.disableDates.findIndex(x => x.year == this.calender.year && this.calender.month.value == x.month.value && x.date == date);
+            return _isAffected >= 0 ? true : false;
+        },
+        disableMonth(month = this.calender.month.value) {
+            if (this.disableYear()) return true;
+            if (this.affectingCurrentYear()) {
+                return (this.disableTo?.month.value > month || this.disableFrom?.month.value < month)
+            }
+            return false;
+        },
+        disableDate(date,) {
+            console.log(date, this.disableMonth(), this.disableYear(), this.disableFrom);
+            if (this.disableYear() || this.disableMonth()) return true;
+            if (this.affectingCurrentDate(date)) return true;
+            else if (this.affectingCurrentYear() && this.affectingCurrentMonth())
+                return (this.disableTo?.date > date || this.disableFrom?.date < date);
+            return false;
+        },
+        disableNextMonth() {
+            if (this.calender.month.value == 0) {
+                if (this.calender.year == _yearRange[1]) {
+                    return true;
+                }
+            }
+            if (this.calender.month.value < this.disableTo?.month.value) return false;
+            else return true;
+        },
+        disablePrevMonth() {
+            if (this.calender.month.value == 0) {
+                if (this.calender.year == _yearRange[0]) {
+                    return true;
+                }
+            }
+            if (this.calender.month.value > this.disableTo?.month.value) return false;
+            else return true; //check year  todo
         },
     }
 }
@@ -156,23 +205,23 @@ export default {
     <div class="englishcalender-main">
         <div class="englishcalender-head">
             <div class="head-left at-center">
-                <button type="button"
-                    @click="disableTo?.month.value <= calender.month.value?$event.preventDefault():prevMonth()"
-                    :class="{'disabled-item': disableTo?.month.value <= calender.month.value}">{{ '<' }}</button>
+                <button type="button" @click="prevMonth()" :class="{'disabled-item': disablePrevMonth()}">{{ '<'
+                }}</button>
             </div>
             <div class="head-center space-betn">
                 <select v-model="calender.year">
-                    <option :class="{'disabled-item':disableTo?.year>(year + _yearRange[0]-1)}"
+                    <option :disabled="disableYear(year + _yearRange[0]-1)"
                         v-for="year in  (_yearRange[1]-_yearRange[0]+1)" :value="year + _yearRange[0]-1">{{
                         year+_yearRange[0]-1 }}</option>
                 </select>
                 <select v-model="calender.month">
-                    <option v-for="mon in month" :value="mon">{{ mon.text }}</option>
+                    <option v-for="mon in month" :disabled="disableMonth(mon.value)" :value="mon">{{
+                    mon.text }}</option>
                 </select>
             </div>
             <div class="head-right at-center">
-                <button type="button" @click="nextMonth()"
-                    :class="{'disabled-item': disableFrom?.month <= calender.month.value}">{{ '>' }}</button>
+                <button type="button" @click="nextMonth()" :class="{'disabled-item': disableNextMonth()}">{{ '>'
+                }}</button>
             </div>
         </div>
         <div class="englishcalender-body">
@@ -182,7 +231,7 @@ export default {
             <div class="week-grid">
                 <div v-for="nd in monthStartDay"></div>
                 <div :class="[{ 'selected-date': calender.date == date && calender.month.value == value.value?.month.value }, 
-                {'disabled-item':disableTo?.date > date || disableFrom?.date < date},
+                {'disabled-item':disableDate(date)},
                 'date-item']" v-for="date in currentYearMonths[this.calender.month.value]" @click="updateDate(date)">{{
                 date }}
                 </div>

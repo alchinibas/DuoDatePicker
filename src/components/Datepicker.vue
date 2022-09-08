@@ -16,7 +16,7 @@ import { computed } from '@vue/reactivity';
 
 onMounted(() => {
   updateDates();
-  console.log(props.disabled, "disabledVlaues");
+  main.disableDates.en = []
   main.today = todaysDate();
   main.dateType = 'EN';
   let container = document.getElementById('datePicker109usojfd');
@@ -47,7 +47,15 @@ const disableTo = computed(() => {
     }
   }
 });
-
+const disableFrom = computed(() => {
+  if (props.disabled.from) {
+    if (props.disabled.type == 'EN') {
+      return { en: dateToObject(props.disabled.from), np: ConvertEnglishToNepali(props.disabled.from) }
+    } else {
+      return { en: ConvertNepaliToEnglish(props.disabled.from), np: stringToObject(props.disabled.from, 'NP') }
+    }
+  }
+});
 const _nepaliDates = [
   { year: 2026, value: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31], days: function () { return this.value.reduce((s, x) => s + x, 0) }, startDay: null },
   { year: 2027, value: [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31], days: function () { return this.value.reduce((s, x) => s + x, 0) }, startDay: null },
@@ -356,11 +364,11 @@ defineExpose({ toggleDatePicker, _nepaliDates, updateEnglishDate, updateNepaliDa
       </select>
     </div>
     <div class="datepicker-body">
-      <nepalidatepicker :value="main.dateNP" :disableTo="disableTo.np" :disableDates="main.disableDates.np"
-        :disableFrom="main.disableFrom.np" :today="main.today?.nepali.value" :options="_nepaliDates"
+      <nepalidatepicker :value="main.dateNP" :disableTo="disableTo?.np" :disableDates="main.disableDates.np"
+        :disableFrom="disableFrom?.np" :today="main.today?.nepali.value" :options="_nepaliDates"
         v-if="main.dateType == 'NP' && main.showDatePicker" />
-      <englishdatepicker :value="main.dateEN" :disableTo="disableTo.en" :disableDates="main.disableDates.en"
-        :disableFrom="main.disableFrom.en" :today="main.today?.english.value"
+      <englishdatepicker :value="main.dateEN" :disableTo="disableTo?.en" :disableDates="main.disableDates.en"
+        :disableFrom="disableFrom?.en" :today="main.today?.english.value"
         v-else-if="main.dateType == 'EN' && main.showDatePicker" />
     </div>
   </div>

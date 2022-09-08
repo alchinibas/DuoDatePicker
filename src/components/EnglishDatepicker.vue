@@ -45,7 +45,7 @@
     border: 1px solid skyblue;
 }
 
-.selected-date {
+e {
     border: 1px solid skyblue;
 }
 </style>
@@ -88,7 +88,7 @@ export default {
             ],
         }
     },
-    props: ['value','today'],
+    props: ['value', 'today', 'disableTo', 'disableFrom', 'disableDates'],
     created() {
         console.log(this.today);
         if (!this.value.value) {
@@ -102,6 +102,7 @@ export default {
         }
     },
     mounted() {
+        console.log(this.disableTo, "disableTo");
     },
     computed: {
         yearStartDay() {
@@ -146,27 +147,32 @@ export default {
         updateDate(date) {
             // this.$emit('change', );
             this.calender.date = date;
-            this.$parent.updateEnglishDate(this.calender);
+            this.calender.updateEnglishDate(this.calender);
         },
     }
 }
 </script>
-    <template>
+<template>
     <div class="englishcalender-main">
         <div class="englishcalender-head">
             <div class="head-left at-center">
-                <button type="button" @click="prevMonth()">{{ '<' }}</button>
+                <button type="button"
+                    @click="disableTo?.month.value <= calender.month.value?$event.preventDefault():prevMonth()"
+                    :class="{'disabled-item': disableTo?.month.value <= calender.month.value}">{{ '<' }}</button>
             </div>
             <div class="head-center space-betn">
                 <select v-model="calender.year">
-                    <option v-for="year in (_yearRange[0], _yearRange[1])" :value="year">{{ year }}</option>
+                    <option :class="{'disabled-item':disableTo?.year>(year + _yearRange[0]-1)}"
+                        v-for="year in  (_yearRange[1]-_yearRange[0]+1)" :value="year + _yearRange[0]-1">{{
+                        year+_yearRange[0]-1 }}</option>
                 </select>
                 <select v-model="calender.month">
                     <option v-for="mon in month" :value="mon">{{ mon.text }}</option>
                 </select>
             </div>
             <div class="head-right at-center">
-                <button type="button" @click="nextMonth()">{{ '>' }}</button>
+                <button type="button" @click="nextMonth()"
+                    :class="{'disabled-item': disableFrom?.month <= calender.month.value}">{{ '>' }}</button>
             </div>
         </div>
         <div class="englishcalender-body">
@@ -175,8 +181,10 @@ export default {
             </div>
             <div class="week-grid">
                 <div v-for="nd in monthStartDay"></div>
-                <div :class="[{ 'selected-date': calender.date == date && calender.month.value == value.value?.month.value }, 'date-item']"
-                    v-for="date in currentYearMonths[this.calender.month.value]" @click="updateDate(date)">{{ date }}
+                <div :class="[{ 'selected-date': calender.date == date && calender.month.value == value.value?.month.value }, 
+                {'disabled-item':disableTo?.date > date || disableFrom?.date < date},
+                'date-item']" v-for="date in currentYearMonths[this.calender.month.value]" @click="updateDate(date)">{{
+                date }}
                 </div>
             </div>
         </div>

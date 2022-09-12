@@ -106,6 +106,7 @@ export default {
         }
     },
     mounted() {
+        console.log("disabeldares", this.disableDates);
     },
     computed: {
         yearStartDay() {

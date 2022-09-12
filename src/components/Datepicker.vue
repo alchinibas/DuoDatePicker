@@ -16,7 +16,6 @@ import { computed } from '@vue/reactivity';
 
 onMounted(() => {
   updateDates();
-  main.disableDates.en = []
   main.today = todaysDate();
   main.dateType = 'EN';
   let container = document.getElementById('datePicker109usojfd');
@@ -55,6 +54,24 @@ const disableFrom = computed(() => {
       return { en: ConvertNepaliToEnglish(props.disabled.from), np: stringToObject(props.disabled.from, 'NP') }
     }
   }
+});
+const disableDates = computed(() => {
+  if (props.disabled.dates?.length) {
+    if (props.disabled.type == 'EN') {
+      props.disabled.dates.map((x) => {
+        main.disableDates.en.push(dateToObject(x));
+        main.disableDates.np.push(ConvertEnglishToNepali(x))
+
+      });
+    } else {
+      props.disabled.dates.map((x) => {
+        main.disableDates.en.push(ConvertNepaliToEnglish(props.disabled.from));
+        main.disableDates.np.push(stringToObject(props.disabled.from, 'NP'))
+      });
+    }
+    return main.disableDates;
+  }
+  return { en: [], np: [] }
 });
 const _nepaliDates = [
   { year: 2026, value: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31], days: function () { return this.value.reduce((s, x) => s + x, 0) }, startDay: null },
@@ -203,7 +220,6 @@ function todaysDate() {
  */
 function NPDateSpan(dateNP) {
   let _defaultDate = main.originNP.split('/').map(x => parseInt(x || 0));
-  console.log("before", _nepaliDates);
   if (dateNP.year >= _defaultDate[0] && _nepaliDates[_nepaliDates.length - 1].year >= dateNP.year) {
     let _totalDays = _nepaliDates.filter(x => x.year > _defaultDate[0] && x.year < dateNP.year).reduce((s, x) => s + x.days(), 0) || 0;
     _totalDays += _nepaliDates.find(x => x.year == _defaultDate[0]).days() - _nepaliDates.find(x => x.year == _defaultDate[0]).value.slice(0, _defaultDate[1]).reduce((s, x) => s + parseInt(x || 0), 0) - _defaultDate[2];
@@ -234,7 +250,6 @@ function duoDigitMaker(val) {
  * @return {void} void
  */
 function updateEnglishDate(obj) {
-  console.log("englisht to nepali");
   obj.date = duoDigitMaker(obj.date);
   obj.month.value = duoDigitMaker(obj.month.value + 1);
   main.dateEN.text = obj.date + '/' + obj.month.value + '/' + obj.year;
@@ -262,7 +277,6 @@ function updateNepaliDate(obj) {
   toggleDatePicker(false);
   main.dateEN.value = ConvertNepaliToEnglish(obj.year.year + '/' + obj.month.value + '/' + obj.date);
   main.dateEN.text = duoDigitMaker(main.dateEN.value.date) + '/' + duoDigitMaker(main.dateEN.value.month.value + 1) + '/' + main.dateEN.value.year;
-  console.log(main.dateEN, main.dateNP);
   // emit('update:modelValue',{dateEN:main.dateEN,dateNP:main.dateNP});
 }
 
@@ -344,7 +358,6 @@ function ConvertNepaliToEnglish(dateNP) {
 ///object: converts and returns nepali date object from english date string
 ///string:(mm/dd/yy)
 function ConvertEnglishToNepali(dateEN) {
-  console.log(dateEN, "English date selected");
   let _addingDays = getNPSpan(new Date(dateEN));
   return addNepaliDaysToOrigin(_addingDays);
 
@@ -364,10 +377,10 @@ defineExpose({ toggleDatePicker, _nepaliDates, updateEnglishDate, updateNepaliDa
       </select>
     </div>
     <div class="datepicker-body">
-      <nepalidatepicker :value="main.dateNP" :disableTo="disableTo?.np" :disableDates="main.disableDates.np"
+      <nepalidatepicker :value="main.dateNP" :disableTo="disableTo?.np" :disableDates="disableDates?.np ??[]"
         :disableFrom="disableFrom?.np" :today="main.today?.nepali.value" :options="_nepaliDates"
         v-if="main.dateType == 'NP' && main.showDatePicker" />
-      <englishdatepicker :value="main.dateEN" :disableTo="disableTo?.en" :disableDates="main.disableDates.en"
+      <englishdatepicker :value="main.dateEN" :disableTo="disableTo?.en" :disableDates="disableDates?.en??[]"
         :disableFrom="disableFrom?.en" :today="main.today?.english.value"
         v-else-if="main.dateType == 'EN' && main.showDatePicker" />
     </div>
